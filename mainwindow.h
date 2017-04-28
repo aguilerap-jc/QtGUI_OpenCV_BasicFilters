@@ -45,6 +45,8 @@ private slots:
 
     void on_horizontalSlider_2_sliderMoved(int position);
 
+    void on_checkBox_stateChanged(int arg1);
+
 private:
     Ui::MainWindow *ui;
 

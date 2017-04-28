@@ -146,6 +146,7 @@ void MainWindow::load_image()
     cv::resize(original_image, resizedImg, size);
     image = resizedImg;
     aRImage = image;
+
     if(filter == "BinaryFilter"){
         loadPositions();
         clock_t begin = clock();
@@ -322,4 +323,10 @@ void MainWindow::on_horizontalSlider_2_sliderMoved(int position)
 void MainWindow::loadPositions(){
     positions[0] = ui->horizontalSlider->pos().rx();
     positions[1] = ui->horizontalSlider_2->pos().rx();
+}
+
+void MainWindow::on_checkBox_stateChanged(int arg1)
+{
+    if(arg1 == 2)
+        cout << "Checked" << endl;
 }
