@@ -15,12 +15,6 @@ using namespace std;
 
 int threshold_value = 100;
 
-Mat getWebCamImage(){
-    //VideoCapture cap(0);
-    //Mat frame;
-    //cap >> frame;
-    //return frame;
-}
 
 Mat oCVmirrorFilter(Mat originalImage){
     Mat ret;

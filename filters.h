@@ -36,8 +36,5 @@ class filters{
         Mat rAedgesFilter(Mat originalImage, int SobelG);
         Mat rAinverseFilter(Mat originalImage, int thrs);
         Mat rAedgesFilterV01(Mat originalImage);
-
-        Mat getWebCamImage();
-
     private:
 };

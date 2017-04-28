@@ -9,6 +9,7 @@
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include "opencv2/imgcodecs.hpp"
+#include <opencv2/videoio.hpp>
 #include "filters.cpp"
 #include <time.h>
 #include <cstdlib>
@@ -18,6 +19,9 @@ using namespace std;
 
 cv::Mat image, filteredImage;
 string filter;
+
+int checkBoxChecked = 0;
+VideoCapture cap(0);
 
 inline QImage  cvMatToQImage( const cv::Mat &inMat )
 {
@@ -76,7 +80,7 @@ MainWindow::MainWindow(QWidget *parent) :
 MainWindow::~MainWindow(){ delete ui; }
 
 void MainWindow::init_form(){
-    main_directory = "/home/aguilerapjc/JC/ITESM/AppRobotics/TareaVisionWGUI/images";
+    main_directory = "/home/aguilerapjc/JC/ITESM/AppRobotics/TareaVisionWGUI/images/";
 
     QDir myDir(main_directory);
     QStringList filesList = myDir.entryList(QDir::NoDotAndDotDot | QDir::System | QDir::Hidden  | QDir::AllDirs | QDir::Files, QDir::DirsFirst);
@@ -122,173 +126,180 @@ void MainWindow::update_image_output()
     ui->label->show();
 }
 
-void MainWindow::load_image()
-{
-    clock_t begin = clock();
-
-
-    clock_t end = clock();
-    double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    QString selected_item = "none";
-
-
-    QListWidgetItem* item = ui->lst_names->currentItem();
-    if ( NULL == item ) return;
-
-    selected_item = ui->lst_names->currentItem()->text();
-
-    QString path = main_directory + selected_item;
-
-    original_image = cv::imread(path.toStdString());
-    Mat resizedImg ;
-    Size size(320,240);
-    cv::resize(original_image, resizedImg, size);
-    image = resizedImg;
-    aRImage = image;
-
-    if(filter == "BinaryFilter"){
-        loadPositions();
+void MainWindow::load_image(){
+    char key = 'c';
+    while(key != 27){
         clock_t begin = clock();
-        image = oCVbinaryFilter(image, positions[0]);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
 
-        begin = clock();
-        aRImage = rAbinaryFilter(aRImage, positions[0]);
-        end = clock();
-        aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[1] = (double)(end - begin);
-        cout <<"Binary Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
+
+        clock_t end = clock();
+        double time_spent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+        QString selected_item = "none";
+
+
+        QListWidgetItem* item = ui->lst_names->currentItem();
+        if ( NULL == item ) return;
+
+        selected_item = ui->lst_names->currentItem()->text();
+
+        QString path = main_directory + selected_item;
+
+        original_image = cv::imread(path.toStdString());
+
+        if(checkBoxChecked){
+                cap >> original_image;
+        }
+
+        Mat resizedImg ;
+        Size size(320,240);
+        cv::resize(original_image, resizedImg, size);
+        image = resizedImg;
+        aRImage = image;
+        if(filter == "BinaryFilter"){
+            loadPositions();
+            clock_t begin = clock();
+            image = oCVbinaryFilter(image, positions[0]);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = rAbinaryFilter(aRImage, positions[0]);
+            end = clock();
+            aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[1] = (double)(end - begin);
+            cout <<"Binary Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }
+        else if(filter == "ErosionFilter"){
+            clock_t begin = clock();
+            image = oCVerodeFilter(image,1);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+        }
+        else if(filter == "InvertedFilter"){
+            loadPositions();
+            clock_t begin = clock();
+            image = oCVinverseFilter(image, positions[0]);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = rAinverseFilter(aRImage, positions[0]);
+            end = clock();
+            aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[1] = (double)(end - begin);
+            cout <<"Inverted Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }
+        else if(filter == "DilationFilter"){
+            clock_t begin = clock();
+            image = oCVdilationFilter(image,1);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+        }
+        else if(filter == "EnhancedFilter"){
+            clock_t begin = clock();
+            image = oCVenhancedFilter(image);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+
+        }
+        else if(filter == "EdgesFilter"){
+            clock_t begin = clock();
+            image = oCVedgesFilter(image);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = aRedgesFilter(aRImage,1);
+            end = clock();
+            srand ( time(NULL) );
+            aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
+            int t = rand()%10+2;
+            clockCycles[1] = ((double)(end - begin)*t);
+
+            cout <<"Edges Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }
+        else if(filter == "Grayscale"){
+            clock_t begin = clock();
+            image = oCVgrayscale(image);
+            clock_t end = clock();
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = rAgrayscale(aRImage);
+            end = clock();
+            aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[1] = (double)(end - begin);
+            cout <<"Grayscale Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }else if(filter == "Gx"){
+            clock_t begin = clock();
+            image = oCVedgesFilter(image);
+            clock_t end = clock();
+            image = aRedgesFilter(aRImage , 2);
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = aRedgesFilter(aRImage , 2);
+            end = clock();
+            srand ( time(NULL) );
+            aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
+            int t = rand()%10+2;
+            clockCycles[1] = ((double)(end - begin)*t);
+
+            cout <<"Edges Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }else if(filter == "Gy"){
+            clock_t begin = clock();
+            image = oCVedgesFilter(image);
+            clock_t end = clock();
+            image = aRedgesFilter(aRImage , 3);
+            oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
+            clockCycles[0] = (double)(end - begin);
+
+            begin = clock();
+            aRImage = aRedgesFilter(aRImage , 3);
+            end = clock();
+            srand ( time(NULL) );
+            aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
+            int t = rand()%10+2;
+            clockCycles[1] = ((double)(end - begin)*t);
+
+            cout <<"Edges Times" << endl;
+            cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
+            cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
+            cout <<"----------------------------" << endl;
+            updateLabels();
+        }
+
+        update_image();
+        key = waitKey(1);
     }
-    else if(filter == "ErosionFilter"){
-        clock_t begin = clock();
-        image = oCVerodeFilter(image,1);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    }
-    else if(filter == "InvertedFilter"){
-        loadPositions();
-        clock_t begin = clock();
-        image = oCVinverseFilter(image, positions[0]);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
-
-        begin = clock();
-        aRImage = rAinverseFilter(aRImage, positions[0]);
-        end = clock();
-        aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[1] = (double)(end - begin);
-        cout <<"Inverted Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
-    }
-    else if(filter == "DilationFilter"){
-        clock_t begin = clock();
-        image = oCVdilationFilter(image,1);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    }
-    else if(filter == "EnhancedFilter"){
-        clock_t begin = clock();
-        image = oCVenhancedFilter(image);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-
-    }
-    else if(filter == "EdgesFilter"){
-        clock_t begin = clock();
-        image = oCVedgesFilter(image);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
-
-        begin = clock();
-        aRImage = aRedgesFilter(aRImage,1);
-        end = clock();
-        srand ( time(NULL) );
-        aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
-        int t = rand()%10+2;
-        clockCycles[1] = ((double)(end - begin)*t);
-
-        cout <<"Edges Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
-    }
-    else if(filter == "Grayscale"){
-        clock_t begin = clock();
-        image = oCVgrayscale(image);
-        clock_t end = clock();
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
-
-        begin = clock();
-        aRImage = rAgrayscale(aRImage);
-        end = clock();
-        aRTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[1] = (double)(end - begin);
-        cout <<"Grayscale Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
-    }else if(filter == "Gx"){
-        clock_t begin = clock();
-        image = oCVedgesFilter(image);
-        clock_t end = clock();
-        image = aRedgesFilter(aRImage , 2);
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
-
-        begin = clock();
-        aRImage = aRedgesFilter(aRImage , 2);
-        end = clock();
-        srand ( time(NULL) );
-        aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
-        int t = rand()%10+2;
-        clockCycles[1] = ((double)(end - begin)*t);
-
-        cout <<"Edges Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
-    }else if(filter == "Gy"){
-        clock_t begin = clock();
-        image = oCVedgesFilter(image);
-        clock_t end = clock();
-        image = aRedgesFilter(aRImage , 3);
-        oCVTimeSpent = (double)(end - begin) / CLOCKS_PER_SEC;
-        clockCycles[0] = (double)(end - begin);
-
-        begin = clock();
-        aRImage = aRedgesFilter(aRImage , 3);
-        end = clock();
-        srand ( time(NULL) );
-        aRTimeSpent = ((double)(end - begin) / CLOCKS_PER_SEC)* (rand()%10+2);
-        int t = rand()%10+2;
-        clockCycles[1] = ((double)(end - begin)*t);
-
-        cout <<"Edges Times" << endl;
-        cout <<oCVTimeSpent <<"    "<< aRTimeSpent << endl;
-        cout << clockCycles[0] <<"    "<< clockCycles[1] << endl;
-        cout <<"----------------------------" << endl;
-        updateLabels();
-    }
-
-    update_image();
 
 }
 void MainWindow::updateLabels(){
@@ -327,6 +338,12 @@ void MainWindow::loadPositions(){
 
 void MainWindow::on_checkBox_stateChanged(int arg1)
 {
-    if(arg1 == 2)
+    if(arg1 == 0){
+        cout << "UnChecked" << endl;
+        checkBoxChecked = 0;
+    }
+    if(arg1 == 2){
         cout << "Checked" << endl;
+        checkBoxChecked = 1;
+    }
 }
